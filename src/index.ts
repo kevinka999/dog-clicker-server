@@ -1,6 +1,8 @@
 import "dotenv/config"
 import express from "express"
 import { Db, MongoClient } from "mongodb"
+import { Server as SocketServer } from "socket.io"
+import { createServer } from "node:http"
 
 let client: MongoClient
 let db: Db
@@ -11,11 +13,19 @@ async function bootstrap() {
   await configure()
 
   const app = express()
+  const server = createServer(app)
+  const socket = new SocketServer(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+    },
+  })
 
   app.use(express.json())
 
   app.post("/login", async (req, res) => {
     const dogIdentifier = req.body.dogIndetifier
+    console.log(req.body)
     if (!dogIdentifier) return res.status(400).send()
 
     const dog = await db
@@ -34,7 +44,14 @@ async function bootstrap() {
     })
   })
 
-  app.listen(3000, () => {
+  socket.on("connection", (socket) => {
+    console.log("a user connected")
+    socket.on("disconnect", () => {
+      console.log("user disconnected")
+    })
+  })
+
+  server.listen(3000, () => {
     console.log("Server running at http://127.0.0.1:3000")
   })
 
