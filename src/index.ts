@@ -3,6 +3,7 @@ import express from "express"
 import { Db, MongoClient } from "mongodb"
 import { Server as SocketServer } from "socket.io"
 import { createServer } from "node:http"
+import cors from "cors"
 
 let client: MongoClient
 let db: Db
@@ -22,6 +23,7 @@ async function bootstrap() {
   })
 
   app.use(express.json())
+  app.use(cors())
 
   app.post("/login", async (req, res) => {
     const dogIdentifier = req.body.dogIndetifier
@@ -46,6 +48,7 @@ async function bootstrap() {
 
   socket.on("connection", (socket) => {
     console.log("a user connected")
+
     socket.on("disconnect", () => {
       console.log("user disconnected")
     })
@@ -55,10 +58,12 @@ async function bootstrap() {
     console.log("Server running at http://127.0.0.1:3000")
   })
 
-  process.on("SIGINT", async () => await disconnectMongo())
-  process.on("beforeExit", async () => await disconnectMongo())
+  process.on("SIGINT", async () => await disconnect())
+  process.on("beforeExit", async () => await disconnect())
 
-  async function disconnectMongo() {
+  async function disconnect() {
+    server.close()
+
     if (!client) return
     console.log("Closing mongodb connection..")
     await client.close()
@@ -67,7 +72,7 @@ async function bootstrap() {
 
 async function configure() {
   const uri = process.env.MONGO_URI || ""
-  const dbName = process.env.CLUSTER_NAME || ""
+  const dbName = process.env.DB_NAME || ""
 
   client = new MongoClient(uri)
   await client.connect()
