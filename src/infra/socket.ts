@@ -20,6 +20,7 @@ export class Socket {
   private socketServer: SocketServer<ClientEvents, ServerEvents, {}, SocketData>
 
   constructor(server: Server) {
+    console.log("[socket] starting socket")
     this.socketServer = new SocketServer(server, {
       cors: {
         origin: "*",
@@ -29,17 +30,20 @@ export class Socket {
     })
   }
 
-  start() {
+  public start() {
     this.bootstrapMiddlewares()
     this.bootstrapEvents()
   }
 
-  disconnectAll() {
-    console.log("Disconnecting sockets from server")
+  public close() {
+    console.log("[socket] disconnecting sockets from server")
     this.socketServer.disconnectSockets()
+    console.log("[socket] closing socket server")
+    this.socketServer.close()
   }
 
   private bootstrapMiddlewares() {
+    console.log("[socket] configuring socket middleware")
     this.socketServer.use(async (socket, next) => {
       try {
         const playerNickname = socket.handshake.headers?.["player-identifier"]
@@ -63,6 +67,7 @@ export class Socket {
   }
 
   private bootstrapEvents() {
+    console.log("[socket] configuring socket events")
     this.socketServer.on("connection", (socket) => {
       console.log(`${socket.data.nickname} user connected`)
       socket.join(socket.data.dogId)
