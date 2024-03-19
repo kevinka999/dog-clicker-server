@@ -1,3 +1,4 @@
+import { DogEntity } from "../../domain/entities"
 import { IDogEventUsecase } from "../../domain/interfaces"
 import { Server } from "socket.io"
 
@@ -6,7 +7,7 @@ interface ClientEvents {
 }
 
 interface ServerEvents {
-  connected: (dogInfo: { name: string }) => void
+  connected: (dogInfo: DogEntity) => void
   disconnected: (nickname: string) => void
   newJoin: (nickname: string) => void
   exp: (exp: number, nickname: string) => void
@@ -31,9 +32,10 @@ export class DogEventHandler {
   public async handleEvents() {
     console.log("[socket] configuring socket events")
 
-    this.socketServer.on("connection", (socket) => {
+    this.socketServer.on("connection", async (socket) => {
       console.log(`${socket.data.nickname} user connected`)
       socket.join(socket.data.dogId)
+      const dogInfo = await this.dogEventUsecase.getDogInfo(socket.data.dogId)
 
       socket.on("dogClicked", async () => {
         const exp = await this.dogEventUsecase.generateDogExp(socket.data.dogId)
@@ -47,10 +49,7 @@ export class DogEventHandler {
         .to(socket.data.dogId)
         .emit("newJoin", socket.data.nickname)
 
-      socket.emit("connected", async () => {
-        const dogInfo = await this.dogEventUsecase.getDogInfo(socket.data.dogId)
-        return dogInfo
-      })
+      socket.emit("connected", dogInfo)
 
       socket.on("disconnect", () => {
         console.log(`${socket.data.nickname} user disconnected`)
