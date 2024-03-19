@@ -25,4 +25,11 @@ export class DogRepository implements IDogRepository {
     const insertedDog = await this.collection.insertOne(dog)
     return insertedDog.insertedId
   }
+
+  public async updateExp(_id: string, expGained: number): Promise<void> {
+    await this.collection.updateOne(
+      { _id: new ObjectId(_id) },
+      { $inc: { exp: expGained } },
+    )
+  }
 }

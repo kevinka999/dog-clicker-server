@@ -1,23 +1,9 @@
 import { Server } from "http"
 import { Server as SocketServer } from "socket.io"
-
-interface ClientEvents {
-  dogClicked: () => void
-}
-
-interface ServerEvents {
-  connected: (dogInfo: { name: string }) => void
-  newJoin: (nickname: string) => void
-  exp: (exp: number, nickname: string) => void
-}
-
-interface SocketData {
-  dogId: string
-  nickname: string
-}
+import { DogEventHandler } from "../presentation/handlers"
 
 export class Socket {
-  private socketServer: SocketServer<ClientEvents, ServerEvents, {}, SocketData>
+  private socketServer: SocketServer
 
   constructor(server: Server) {
     console.log("[socket] starting socket")
@@ -30,9 +16,16 @@ export class Socket {
     })
   }
 
-  public start() {
+  public async start() {
+    const container = await (await import("../infra/container")).default
+
     this.bootstrapMiddlewares()
-    this.bootstrapEvents()
+
+    const eventHandler = new DogEventHandler(
+      container.get("dogEventUsecase"),
+      this.socketServer,
+    )
+    await eventHandler.handleEvents()
   }
 
   public close() {
@@ -63,29 +56,6 @@ export class Socket {
       } catch (e) {
         next(e)
       }
-    })
-  }
-
-  private bootstrapEvents() {
-    console.log("[socket] configuring socket events")
-    this.socketServer.on("connection", (socket) => {
-      console.log(`${socket.data.nickname} user connected`)
-      socket.join(socket.data.dogId)
-
-      socket.on("dogClicked", () => {
-        const randomExp = Math.floor(Math.random() * 11)
-        this.socketServer
-          .to(socket.data.dogId)
-          .emit("exp", randomExp, socket.data.nickname)
-      })
-
-      socket.emit("connected", { name: "Mocked Doggo" })
-
-      this.socketServer.emit("newJoin", socket.data.nickname)
-
-      socket.on("disconnect", () => {
-        console.log("user disconnected")
-      })
     })
   }
 }

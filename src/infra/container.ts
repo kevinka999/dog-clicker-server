@@ -1,4 +1,4 @@
-import { LoginUsecase } from "../application/usecases"
+import { LoginUsecase, DogEventUsecase } from "../application/usecases"
 import { DogRepository } from "../infra/repositories"
 import mongo from "./mongo"
 
@@ -29,6 +29,10 @@ container.set("dogRepository", new DogRepository(mongo.mongoDb))
 container.set(
   "loginUsecase",
   new LoginUsecase(container.get<DogRepository>("dogRepository")),
+)
+container.set(
+  "dogEventUsecase",
+  new DogEventUsecase(container.get<DogRepository>("dogRepository")),
 )
 
 export default container

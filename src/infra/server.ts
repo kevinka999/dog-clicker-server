@@ -2,6 +2,7 @@ import "dotenv/config"
 import express from "express"
 import { createServer } from "node:http"
 import { Socket } from "./socket"
+import { RouterHandler } from "../presentation/router"
 import mongo from "./mongo"
 import cors from "cors"
 
@@ -14,7 +15,7 @@ async function bootstrap() {
 
   app.use(express.json())
   app.use(cors())
-  const router = await (await import("../interfaces/router")).default
+  const router = await new RouterHandler().generateRouter()
   app.use(router)
 
   const socket = new Socket(server)
