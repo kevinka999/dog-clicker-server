@@ -3,6 +3,7 @@ import express from "express"
 import { createServer } from "node:http"
 import { Socket } from "./socket"
 import { RouterHandler } from "../presentation/router"
+import redis from "./redis"
 import mongo from "./mongo"
 import cors from "cors"
 
@@ -11,10 +12,13 @@ bootstrap()
 async function bootstrap() {
   const app = express()
   const server = createServer(app)
+
   await mongo.bootstrap()
+  await redis.connect()
 
   app.use(express.json())
   app.use(cors())
+
   const router = await new RouterHandler().generateRouter()
   app.use(router)
 
@@ -32,5 +36,6 @@ async function bootstrap() {
     server.close()
     mongo.close()
     socket.close()
+    redis.disconnect()
   }
 }
