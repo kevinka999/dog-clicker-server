@@ -10,7 +10,7 @@ interface ServerEvents {
   connected: (dogInfo: DogEntity) => void
   disconnected: (nickname: string) => void
   newJoin: (nickname: string) => void
-  exp: (exp: number, nickname: string) => void
+  exp: (expGained: number, totalExp, nickname: string) => void
 }
 
 interface SocketData {
@@ -38,11 +38,12 @@ export class DogEventHandler {
       const dogInfo = await this.dogEventUsecase.getDogInfo(socket.data.dogId)
 
       socket.on("dogClicked", async () => {
-        const exp = await this.dogEventUsecase.generateDogExp(socket.data.dogId)
+        const { expGained, totalExp } =
+          await this.dogEventUsecase.generateDogExp(socket.data.dogId)
 
         this.socketServer
           .to(socket.data.dogId)
-          .emit("exp", exp, socket.data.nickname)
+          .emit("exp", expGained, totalExp, socket.data.nickname)
       })
 
       this.socketServer

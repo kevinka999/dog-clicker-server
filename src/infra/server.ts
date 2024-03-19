@@ -11,10 +11,12 @@ bootstrap()
 async function bootstrap() {
   const app = express()
   const server = createServer(app)
+
   await mongo.bootstrap()
 
   app.use(express.json())
   app.use(cors())
+
   const router = await new RouterHandler().generateRouter()
   app.use(router)
 
